@@ -11,6 +11,27 @@
 #define PORT 1234
 #define BUFFER_SIZE 1024
 
+// Fonction temporaire qui a pour but de prendre le buffer reçu en extraire le pseudo du destinataire en début de message et de le renvoyer sans le pseudo dans le buffer au destinataire
+char* getDestinataire(const char* buffer) {
+    while (*buffer && isspace((unsigned char)*buffer)) { // Enlever les espaces initiaux
+        buffer++;
+    }
+    const char *space = strchr(buffer, ' '); // Trouver le premier espace
+    if (space) {
+        size_t pseudo_length = space - buffer;
+        char *pseudo = malloc(pseudo_length + 1);
+        if (!pseudo) {
+            perror("Memory allocation failed");
+            exit(1);
+        }
+        strncpy(pseudo, buffer, pseudo_length);
+        pseudo[pseudo_length] = '\0';
+        printf("Destinataire: %s\n", pseudo);
+        return pseudo; // Pas de free ici, le code appelant doit gérer la mémoire
+    }
+    return NULL;
+}
+
 //Cette fonction ne va pas durer elle sert à vérifier que les messages arrivent bel et bien dans le serveur
 void handle_client_message(int client_sock, fd_set *readfds) {
     char buffer[BUFFER_SIZE];
@@ -39,28 +60,6 @@ void handle_client_message(int client_sock, fd_set *readfds) {
             free(destinataire);
         }
     }
-}
-
-
-// Fonction temporaire qui a pour but de prendre le buffer reçu en extraire le pseudo du destinataire en début de message et de le renvoyer sans le pseudo dans le buffer au destinataire
-char* getDestinataire(const char* buffer) {
-    while (*buffer && isspace((unsigned char)*buffer)) { // Enlever les espaces initiaux
-        buffer++;
-    }
-    const char *space = strchr(buffer, ' '); // Trouver le premier espace
-    if (space) {
-        size_t pseudo_length = space - buffer;
-        char *pseudo = malloc(pseudo_length + 1);
-        if (!pseudo) {
-            perror("Memory allocation failed");
-            exit(1);
-        }
-        strncpy(pseudo, buffer, pseudo_length);
-        pseudo[pseudo_length] = '\0';
-        printf("Destinataire: %s\n", pseudo);
-        return pseudo; // Pas de free ici, le code appelant doit gérer la mémoire
-    }
-    return NULL;
 }
 
 
