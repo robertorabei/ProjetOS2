@@ -5,18 +5,22 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #include "clienthandler.h"
+#include "parametres.h"
 
 
 Client clients[MAX_CLIENTS];
 int clientCount = 0;
 
 //Ajoute client et son socketfd dans la liste des 1000 clients disponibles 
-void addClient(int sockfd, const char *pseudo){
+void addClient(int sockfd, DataClient* data){
     if (clientCount < MAX_CLIENTS){
         clients[clientCount].sockfd = sockfd;
-        strncpy(clients[clientCount].pseudo, pseudo, sizeof(clients[clientCount].pseudo) - 1);
+        strncpy(clients[clientCount].pseudo, data->pseudo, sizeof(clients[clientCount].pseudo) - 1);
+        clients[clientCount].isBot = data->isBot;
+        clients[clientCount].isManuel = data->isManuel;
         clients[clientCount].pseudo[sizeof(clients[clientCount].pseudo) - 1] = '\0';
 
         clientCount++;
@@ -53,3 +57,4 @@ const char* getName(int sockfd) {
     }
     return NULL; // Retourne NULL si aucun client trouvé
 }
+
