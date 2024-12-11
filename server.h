@@ -21,7 +21,7 @@
  * @return Une chaîne allouée dynamiquement contenant le pseudonyme du destinataire,
  *         ou NULL si aucun pseudonyme n'est trouvé. Le code appelant doit libérer la mémoire.
  */
-char* getDestinataire(const char* buffer);
+char* getDestinataire(char* buffer);
 
 /**
  * Gère les messages reçus d'un client.
@@ -40,3 +40,4 @@ void handle_client_message(int client_sock, fd_set *readfds);
 void newConnection(int server_sock, struct sockaddr_in *client_addr);
 
 #endif // SERVER_H
+
