@@ -6,29 +6,40 @@
 #include <sys/select.h>
 #include <ctype.h>
 
+#include "parametres.h"
 #include "clienthandler.h"
 
 #define PORT 1234
 #define BUFFER_SIZE 1024
 
 // Fonction temporaire qui a pour but de prendre le buffer reçu en extraire le pseudo du destinataire en début de message et de le renvoyer sans le pseudo dans le buffer au destinataire
-char* getDestinataire(const char* buffer) {
-    while (*buffer && isspace((unsigned char)*buffer)) { // Enlever les espaces initiaux
+char* getDestinataire(char* buffer) {
+    // Enlever les espaces initiaux
+    while (*buffer && isspace((unsigned char)*buffer)) {
         buffer++;
     }
-    const char *space = strchr(buffer, ' '); // Trouver le premier espace
+
+    // Trouver le premier espace (qui sépare le pseudo du message)
+    const char *space = strchr(buffer, ' '); 
     if (space) {
-        size_t pseudo_length = space - buffer;
-        char *pseudo = malloc(pseudo_length + 1);
+        size_t pseudo_length = space - buffer; // Longueur du pseudo
+        char *pseudo = malloc(pseudo_length + 1); // Allocation mémoire pour le pseudo
         if (!pseudo) {
             perror("Memory allocation failed");
             exit(1);
         }
+
+        // Copie du pseudo dans la nouvelle variable
         strncpy(pseudo, buffer, pseudo_length);
         pseudo[pseudo_length] = '\0';
-        printf("Destinataire: %s\n", pseudo);
-        return pseudo; // Pas de free ici, le code appelant doit gérer la mémoire
+
+        // Nettoyer le buffer, en décalant le message après le pseudo
+        size_t remaining_length = strlen(space + 1); // Le reste du message après l'espace
+        memmove(buffer, space + 1, remaining_length + 1); // Déplace le message sans le pseudo
+        return pseudo; // Retourne le pseudo, la mémoire doit être gérée par le code appelant
     }
+
+    // Si aucun espace trouvé, il n'y a pas de destinataire valide
     return NULL;
 }
 
@@ -38,26 +49,35 @@ void handle_client_message(int client_sock, fd_set *readfds) {
     int n = recv(client_sock, buffer, sizeof(buffer) - 1, 0);
 
     if (n <= 0) {
-        // Gestion de la déconnexion
         if (n == 0) {
-            printf("Client %d disconnected.\n", client_sock);
+            printf("%s disconnected.\n", getName(client_sock));
         } else {
             perror("Recv error");
         }
         close(client_sock);
         FD_CLR(client_sock, readfds);
-        removeClient(client_sock); // Assurez-vous d'avoir cette fonction
+        removeClient(client_sock);
     } else {
-        buffer[n] = '\0';
-        char* destinataire = getDestinataire(buffer);
+        buffer[n] = '\0';  // Assurez-vous que le buffer est bien terminé
+        char* destinataire = getDestinataire(buffer);  // Extrait le destinataire et nettoie le buffer
         if (destinataire) {
-            int dest_sock = getSocketfd(destinataire); // Implémentez cette fonction
+            int dest_sock = getSocketfd(destinataire);  // Récupère le socket du destinataire
             if (dest_sock > 0) {
-                send(dest_sock, buffer, strlen(buffer), 0);
+                // Récupérer le pseudo de l'expéditeur
+                const char* pseudo_expéditeur = getName(client_sock);  // Fonction qui récupère le pseudo du client par son socket
+                if (pseudo_expéditeur) {
+                    // Préparer le message avec le format attendu
+                    char message[BUFFER_SIZE];
+                    
+                    snprintf(message, sizeof(message), "[%s] %s", pseudo_expéditeur, buffer);
+                    
+                    // Envoyer le message formaté au destinataire
+                    send(dest_sock, message, strlen(message), 0);
+                }
             } else {
-                printf("Cette personne (%s) n'est pas connectée.\n", destinataire); //normalement c'est un stderr je change bientôt
+                printf("Destinataire (%s) non connecté.\n", destinataire);
             }
-            free(destinataire);
+            free(destinataire);  // Libère la mémoire allouée pour le pseudo
         }
     }
 }
@@ -71,12 +91,12 @@ void newConnection(int server_sock, struct sockaddr_in *client_addr) {
         exit(1);
     }
     // Recevoir le pseudo du client
-    char pseudo[PSEUDO_MAX_LENGTH];
-    int n = recv(new_sock, pseudo, sizeof(pseudo), 0); // Dès que client se connecte il envoye son pseudo au serveur, ici le serveur s'occupe de le réceptionner 
+    DataClient data;
+    int n = recv(new_sock, &data, sizeof(DataClient), 0); // Dès que client se connecte il envoye ses données au serveur 
 
-    // Ajouter le client à la liste des clients connectés
-    addClient(new_sock, pseudo);
-    printf("[+] %s connected to chat.\n", pseudo);
+    // Ajouter le client à la liste des clients connectés avec ses données
+    addClient(new_sock, &data);
+    printf("[+] %s connected to chat.\n", data.pseudo);
 }
 
 int main() {
@@ -153,3 +173,4 @@ int main() {
 
     return 0;
 }
+
