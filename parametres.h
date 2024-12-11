@@ -15,11 +15,18 @@ enum {
 };
 
 typedef struct {
+   char pseudo[MAX_PSEUDO_DESTINATAIRE];
    bool isBot;
    bool isManuel;
-} OptionsProgramme;
+} DataClient;
 
-
-void GererParameteres(int argc, char* argv[], OptionsProgramme* options);
+/**
+ * Gère les paramètres de la ligne de commande et initialise les données du client.
+ *
+ * @param argc 
+ * @param argv 
+ * @param data Pointeur vers la structure `DataClient` à remplir.
+ */
+void GererParametres(int argc, char* argv[], DataClient* data);
 
 #endif
