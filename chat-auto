@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Demande du destinataire initial
+echo "Entrez le pseudonyme du destinataire initial :"
+read destinataire
+
+# Vérification si le destinataire est vide
+if [ -z "$destinataire" ]; then
+  echo "Le pseudonyme du destinataire ne peut pas être vide."
+  exit 1
+fi
+
+# Lancement du programme chat avec le destinataire initial
+echo "Vous êtes maintenant connecté avec le destinataire '$destinataire'."
+echo "Entrez vos messages. Appuyez sur Ctrl+D pour changer de destinataire."
+
+# Rediriger stdin pour ajouter automatiquement le pseudonyme du destinataire
+while true; do
+    # On attend une entrée de l'utilisateur
+    read message
+    if [ $? -eq 1 ]; then
+        # Si Ctrl+D est pressé (fin de ligne), demander un nouveau destinataire
+        echo "Entrez un nouveau pseudonyme du destinataire (ou appuyez sur Ctrl+D pour quitter) :"
+        read destinataire
+        
+        # Si aucun pseudonyme n'est entré ou si Ctrl+D est pressé de nouveau, quitter le script
+        if [ -z "$destinataire" ]; then
+            echo "Fin du programme."
+            break
+        fi
+        
+        echo "Nouveau destinataire : '$destinataire'."
+        continue
+    fi
+
+    # Ajouter le pseudonyme au début du message et l'envoyer au programme chat
+    echo "$destinataire $message" | ./chat "$destinataire"
+done

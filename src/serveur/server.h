@@ -13,6 +13,11 @@
 
 #define PORT 1234        // Port utilisé par le serveur
 #define BUFFER_SIZE 1024 // Taille du tampon pour les messages
+#define MAX_MESSAGE_LENGTH 1024 // Longueur maximale des messages
+
+typedef struct {
+    char messages[BUFFER_SIZE][MAX_MESSAGE_LENGTH]; // Tableau de messages
+} SuspendedMessages;
 
 /**
  * Extrait le pseudonyme du destinataire d'un message.
@@ -40,4 +45,3 @@ void handle_client_message(int client_sock, fd_set *readfds);
 void newConnection(int server_sock, struct sockaddr_in *client_addr);
 
 #endif // SERVER_H
-

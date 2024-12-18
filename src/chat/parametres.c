@@ -40,9 +40,15 @@ static void ExtraireData(int argc, char* argv[], DataClient* data) {
    for (int i = 2; i < argc; ++i) {
        if (strcmp(argv[i], "--bot") == 0) {
            data->isBot = true;
-       } else if (strcmp(argv[i], "--manuel") == 0) {
+       }
+       if (strcmp(argv[i], "--manuel") == 0) {
            data->isManuel = true;
        }
+       if (strcmp(argv[i], "--bot") != 0 && strcmp(argv[i], "--manuel") != 0) {
+           // Argument pas valide
+           fprintf(stderr, "chat pseudo_utilisateur [--bot] [--manuel]\n");
+           return 1;
+        }
    }
 }
 
@@ -50,4 +56,3 @@ void GererParametres(int argc, char* argv[], DataClient* data) {
    VerifPseudo(argc, argv);
    ExtraireData(argc, argv, data);
 }
-

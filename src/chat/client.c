@@ -6,10 +6,16 @@
 #include <pthread.h>
 
 #include "parametres.h"
-#include "clienthandler.h"
+#include "../serveur/clienthandler.h"  
 
-#define PORT 1234
+#define DEFAULT_PORT 1234
+#define DEFAULT_IP "127.0.0.1"
 #define BUFFER_SIZE 1024
+
+//Initialisation statique des mutex
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
+
 
 // Fonction pour recevoir les messages du serveur
 void *receiveMessages(void *socket) {
@@ -50,14 +56,69 @@ void *sendMessages(void *socket) {
     return NULL;
 }
 
+// Fonction pour vérifier l'adresse IP
+bool verificationIP(const char *varEnvi,char **ip){
+    char *IP_SERVEUR = getenv(varEnvi);
+
+    if(IP_SERVEUR != NULL){
+        bool isValid = inet_pton(AF_INET,IP_SERVEUR, NULL);
+        if(isValid){
+            *ip = IP_SERVEUR;
+            return true;
+        }
+        // Adresse IP par défaut
+        return false;
+    }
+
+}
+
+//Fonction pour vérififer le port
+bool verificationPORT(const char *varEnvi, char *port){
+    char *PORT_SERVEUR = getenv(varEnvi);
+
+    if(PORT_SERVEUR != NULL){
+        const int decimalBase = 10;
+        char *conversion_end;
+        long numPort = strtol(PORT_SERVEUR, &conversion_end, decimalBase);
+
+        if(*conversion_end == "\0" && numPort >= 1 && numPort <= 65535){
+            *port = numPort;
+            return true;
+        }
+    }
+    //Port par défaut
+    return false;
+}
+
+
 int main(int argc, char *argv[]) {
     DataClient data;
     GererParametres(argc, argv, &data);
 
-    char *ip = "127.0.0.1";
+    bool modeBot = data.isBot;
+    bool modeManuel = data.isManuel;
+
+    char *ip = NULL;  
+    int port;
     int sock;
     struct sockaddr_in addr;
     pthread_t recvThread, sendThread;
+
+    //Assignation de la valeur de l'adresse IP
+    if(!verificationIP("IP_SERVEUR", &ip)){
+       ip = DEFAULT_IP;
+       printf("Utilisation de l'adresse IP par défaut : %s\n", ip);
+    } else{
+        printf("Adresse IP validé : %s\n", ip);
+    }
+
+    //Assignation de la valeur du port
+    if(!verificationPORT("PORT_SERVEUR", &port)){
+        int port = DEFAULT_PORT;
+        printf("Utilisation du port par défaut %d\n", port);
+    } else{
+        printf("Port validé : %d\n", port);
+    }
 
     // Créer le socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -69,11 +130,11 @@ int main(int argc, char *argv[]) {
     // Préparer l'adresse du serveur
     memset(&addr, '\0', sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = PORT;
+    addr.sin_port = DEFAULT_PORT;
     addr.sin_addr.s_addr = inet_addr(ip);
 
     // Se connecter au serveur
-    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    if (connect(sock, (const struct sockaddr *)&addr, sizeof(addr)) < 0) {
         perror("Connect error");
         exit(1);
     }

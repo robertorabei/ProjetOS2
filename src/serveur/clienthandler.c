@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 #include "clienthandler.h"
-#include "parametres.h"
+#include "../chat/parametres.h"
 
 
 Client clients[MAX_CLIENTS];

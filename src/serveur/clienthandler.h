@@ -10,7 +10,7 @@
 #include <sys/select.h>
 #include <errno.h>
 
-#include "parametres.h"
+#include "../chat/parametres.h"
 
 #define MAX_CLIENTS 1000
 #define PSEUDO_MAX_LENGTH 30
