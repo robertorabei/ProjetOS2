@@ -6,7 +6,7 @@
 #include <sys/select.h>
 #include <ctype.h>
 
-#include "parametres.h"
+#include "../chat/parametres.h"
 #include "clienthandler.h"
 
 #define PORT 1234
