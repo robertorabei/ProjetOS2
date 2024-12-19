@@ -69,10 +69,11 @@ void handle_client_message(int client_sock, fd_set *readfds) {
                     // Préparer le message avec le format attendu
                     char message[BUFFER_SIZE];
                     
-                    snprintf(message, sizeof(message), "[%s] %s", pseudo_expéditeur, buffer);
+                    snprintf(message, sizeof(message), "[\x1B[4m%s\x1B[0m] %s", pseudo_expéditeur, buffer);
                     
                     // Envoyer le message formaté au destinataire
                     send(dest_sock, message, strlen(message), 0);
+                    send(client_sock, message, strlen(message), 0);
                 }
             } else {
                 printf("Destinataire (%s) non connecté.\n", destinataire);
