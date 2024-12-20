@@ -72,7 +72,7 @@ bool verificationIP(const char *varEnvi,char **ip){
 }
 
 //Fonction pour vérififer le port
-bool verificationPORT(const char *varEnvi, char *port){
+bool verificationPORT(const char *varEnvi, int *port){
     char *PORT_SERVEUR = getenv(varEnvi);
 
     if(PORT_SERVEUR != NULL){
@@ -80,8 +80,8 @@ bool verificationPORT(const char *varEnvi, char *port){
         char *conversion_end;
         long numPort = strtol(PORT_SERVEUR, &conversion_end, decimalBase);
 
-        if(*conversion_end == "\0" && numPort >= 1 && numPort <= 65535){
-            *port = numPort;
+        if(*conversion_end == '\0' && numPort >= 1 && numPort <= 65535){
+            *port = (int)numPort;
             return true;
         }
     }
@@ -93,9 +93,6 @@ bool verificationPORT(const char *varEnvi, char *port){
 int main(int argc, char *argv[]) {
     DataClient data;
     GererParametres(argc, argv, &data);
-
-    bool modeBot = data.isBot;
-    bool modeManuel = data.isManuel;
 
     char *ip = NULL;  
     int port;
