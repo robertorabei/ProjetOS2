@@ -1,38 +1,65 @@
 #!/bin/bash
 
-# Demande du destinataire initial
-echo "Entrez le pseudonyme du destinataire initial :"
-read destinataire
+# Valeurs par défaut pour les options facultatives
+MODE=""
 
-# Vérification si le destinataire est vide
-if [ -z "$destinataire" ]; then
-  echo "Le pseudonyme du destinataire ne peut pas être vide."
-  exit 1
+# Demander le nom d'utilisateur
+read -p "Entrez votre nom d'utilisateur : " USERNAME
+if [[ -z "$USERNAME" ]]; then
+    echo "Erreur : Le nom d'utilisateur ne peut pas être vide."
+    exit 1
 fi
 
-# Lancement du programme chat avec le destinataire initial
-echo "Vous êtes maintenant connecté avec le destinataire '$destinataire'."
-echo "Entrez vos messages. Appuyez sur Ctrl+D pour changer de destinataire."
+# Demander le mode (facultatif)
+read -p "Entrez le mode (bot ou manuel, laissez vide pour aucun mode) : " MODE
 
-# Rediriger stdin pour ajouter automatiquement le pseudonyme du destinataire
+# Construire la commande
+CMD="./chat $USERNAME"  # Le nom d'utilisateur est un argument obligatoire
+
+# Ajouter le mode si fourni
+if [[ -n "$MODE" ]]; then
+    CMD="$CMD --$MODE"
+fi
+
+# Fonction pour demander le nom d'utilisateur du destinataire
+prompt_recipient() {
+    read -p "Entrez le nom d'utilisateur du destinataire : " RECIPIENT
+    if [[ -z "$RECIPIENT" ]]; then
+        echo "Aucun destinataire spécifié, sortie."
+        exit 0
+    fi
+}
+
+# Exécuter le programme client avec la commande
+eval $CMD &  # Lancer le client de chat en arrière-plan
+CLIENT_PID=$!
+
+# Attendre que le client s'initialise avant de continuer
+sleep 1
+
+# Demande initiale du destinataire
+prompt_recipient
+
+# Boucle pour lire et envoyer des messages individuels
 while true; do
-    # On attend une entrée de l'utilisateur
-    read message
-    if [ $? -eq 1 ]; then
-        # Si Ctrl+D est pressé (fin de ligne), demander un nouveau destinataire
-        echo "Entrez un nouveau pseudonyme du destinataire (ou appuyez sur Ctrl+D pour quitter) :"
-        read destinataire
-        
-        # Si aucun pseudonyme n'est entré ou si Ctrl+D est pressé de nouveau, quitter le script
-        if [ -z "$destinataire" ]; then
-            echo "Fin du programme."
-            break
-        fi
-        
-        echo "Nouveau destinataire : '$destinataire'."
+    # Lire l'entrée du message
+    echo "Entrez votre message (Ctrl+D pour changer de destinataire) :"
+    
+    # Lire un message sur une seule ligne
+    if ! IFS= read -r MESSAGE; then
+        # Si Ctrl+D est pressé ou si l'entrée est vide, demander un nouveau destinataire ou sortir
+        prompt_recipient
         continue
     fi
 
-    # Ajouter le pseudonyme au début du message et l'envoyer au programme chat
-    echo "$destinataire $message" | ./chat "$destinataire"
+    # Si le message est vide, continuer la boucle
+    if [[ -z "$MESSAGE" ]]; then
+        continue
+    fi
+
+    # Ajouter le nom d'utilisateur du destinataire au message
+    MESSAGE="$RECIPIENT $MESSAGE"
+
+    # Envoyer le message au programme de chat (stdin du client)
+    echo -e "$MESSAGE" > /proc/$CLIENT_PID/fd/0
 done
