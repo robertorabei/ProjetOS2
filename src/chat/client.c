@@ -66,10 +66,9 @@ bool verificationIP(const char *varEnvi,char **ip){
             *ip = IP_SERVEUR;
             return true;
         }
-        // Adresse IP par défaut
-        return false;
     }
-
+    // Adresse IP par défaut
+        return false;
 }
 
 //Fonction pour vérififer le port
