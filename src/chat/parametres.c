@@ -47,7 +47,7 @@ static void ExtraireData(int argc, char* argv[], DataClient* data) {
        if (strcmp(argv[i], "--bot") != 0 && strcmp(argv[i], "--manuel") != 0) {
            // Argument pas valide
            fprintf(stderr, "chat pseudo_utilisateur [--bot] [--manuel]\n");
-           return 1;
+           exit(1);
         }
    }
 }
