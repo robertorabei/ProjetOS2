@@ -64,12 +64,12 @@ void handle_client_message(int client_sock, fd_set *readfds) {
             int dest_sock = getSocketfd(destinataire);  // Récupère le socket du destinataire
             if (dest_sock > 0) {
                 // Récupérer le pseudo de l'expéditeur
-                const char* pseudo_expéditeur = getName(client_sock);  // Fonction qui récupère le pseudo du client par son socket
-                if (pseudo_expéditeur) {
+                const char* pseudo_expediteur = getName(client_sock);  // Fonction qui récupère le pseudo du client par son socket
+                if (pseudo_expediteur) {
                     // Préparer le message avec le format attendu
                     char message[BUFFER_SIZE];
                     
-                    snprintf(message, sizeof(message), "[\x1B[4m%s\x1B[0m] %s", pseudo_expéditeur, buffer);
+                    snprintf(message, sizeof(message), "[\x1B[4m%s\x1B[0m] %s", pseudo_expediteur, buffer);
                     
                     // Envoyer le message formaté au destinataire
                     send(dest_sock, message, strlen(message), 0);
