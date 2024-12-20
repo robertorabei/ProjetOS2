@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "signal.h"
-#include "server.h"
+#include "buffer.h"
 
 
 static volatile sig_atomic_t receptionSIGINT = 0; 

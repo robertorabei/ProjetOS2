@@ -12,12 +12,9 @@
 #include "clienthandler.h"
 
 #define PORT 1234        // Port utilisé par le serveur
-#define BUFFER_SIZE 1024 // Taille du tampon pour les messages
+#define BUFFER_SIZE ((size_t)1024) // Taille du tampon pour les messages
 #define MAX_MESSAGE_LENGTH 1024 // Longueur maximale des messages
 
-typedef struct {
-    char messages[BUFFER_SIZE][MAX_MESSAGE_LENGTH]; // Tableau de messages
-} SuspendedMessages;
 
 /**
  * Extrait le pseudonyme du destinataire d'un message.
