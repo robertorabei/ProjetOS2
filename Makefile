@@ -15,7 +15,7 @@ EXE_SERVEUR     := $(BINDIR)$(NAME_SERVEUR)
 SFILES  := c
 OFILES  := o
 CC      := gcc
-CFLAGS  := -std=gnu11 -Wall -Wextra -O2 -std=gnu2x -pedantic -march=native -Wnull-dereference -Winline -Wconversion -pthread -flto -pipe -g -fsanitize=address,undefined
+CFLAGS  := -std=gnu11 -Wall -Wextra -O2 -std=gnu2x -Wpedantic -march=native -Wnull-dereference -Winline -Wconversion -pthread -flto -pipe -g -fsanitize=address,undefined
 LIBS    := -fsanitize=address,undefined
 
 SOURCES_CLIENT := $(shell find $(SRCDIR_CLIENT) -name "*.$(SFILES)")
