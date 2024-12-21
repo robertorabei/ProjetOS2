@@ -1,77 +1,77 @@
 #!/bin/bash
 
-# Default values for optional flags
+# Valeurs par défaut pour les options
 MODE=""
 
-# Prompt for the username
-read -p "Enter your username: " USERNAME
+# Demander le nom d'utilisateur
+read -p "Entrez votre nom d'utilisateur : " USERNAME
 if [[ -z "$USERNAME" ]]; then
-    echo "Error: Username cannot be empty."
+    echo "Erreur : Le nom d'utilisateur ne peut pas être vide."
     exit 1
 fi
 
-# Prompt for the mode (optional)
-read -p "Enter mode (bot or manuel, leave empty for no mode): " MODE
+# Demander le mode (optionnel)
+read -p "Entrez le mode (bot ou manuel, laissez vide pour aucun mode) : " MODE
 
-# Build the command
-CMD="./chat $USERNAME"  # The username is a required argument
+# Construire la commande
+CMD="./chat $USERNAME"  # Le nom d'utilisateur est un argument obligatoire
 
-# Append the mode if provided
+# Ajouter le mode si fourni
 if [[ -n "$MODE" ]]; then
     CMD="$CMD --$MODE"
 fi
 
-# Create a named pipe for communication
+# Créer un pipe nommé pour la communication
 PIPE_NAME="/tmp/chat_pipe"
 if [[ ! -p "$PIPE_NAME" ]]; then
     mkfifo "$PIPE_NAME"
 fi
 
-# Run the client program with the command, redirecting input from the pipe
-$CMD < "$PIPE_NAME" &  # Run the chat client in the background
+# Exécuter le programme client avec la commande, en redirigeant l'entrée depuis le pipe
+$CMD < "$PIPE_NAME" &  # Exécuter le client de chat en arrière-plan
 CLIENT_PID=$!
 
-# Wait for the client to initialize before continuing
+# Attendre l'initialisation du client avant de continuer
 sleep 1
 
-# Function to prompt for the recipient's username
+# Fonction pour demander le nom d'utilisateur du destinataire
 prompt_for_recipient() {
-    read -p "Enter the recipient's username: " RECIPIENT
+    read -p "Entrez le nom d'utilisateur du destinataire : " RECIPIENT
     if [[ -z "$RECIPIENT" ]]; then
-        echo "No recipient specified, exiting."
+        echo "Aucun destinataire spécifié, sortie."
         kill "$CLIENT_PID"
         rm "$PIPE_NAME"
         exit 0
     fi
 }
 
-# Initial recipient prompt
+# Demande initiale du destinataire
 prompt_for_recipient
 
-# Loop to read and send individual messages continuously
+# Boucle pour lire et envoyer les messages individuellement de façon continue
 while true; do
-    echo "Enter your message (Ctrl+D to change recipient or exit):"
+    echo "Entrez votre message (Ctrl+D pour changer de destinataire ou quitter) :"
     
-    # Read user input
+    # Lire l'entrée de l'utilisateur
     if ! IFS= read -r MESSAGE; then
-        echo "No message entered. Exiting."
+        echo "Aucun message saisi. Sortie."
         break
     fi
 
-    # If the user enters an empty message, skip
+    # Si l'utilisateur entre un message vide, passer
     if [[ -z "$MESSAGE" ]]; then
         continue
     fi
 
-    # Prepend the recipient username to the message
+    # Ajouter le nom du destinataire au début du message
     MESSAGE="$RECIPIENT $MESSAGE"
-    # Write the message to the pipe
+    # Écrire le message dans le pipe
     echo -e "$MESSAGE" > "$PIPE_NAME"
     sleep 0.5
     
 done
 
-# Cleanup on exit
+# Nettoyage à la sortie
 kill "$CLIENT_PID"
 rm "$PIPE_NAME"
 
