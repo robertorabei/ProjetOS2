@@ -42,6 +42,7 @@ void *sendMessages(void *socket) {
     char buffer[BUFFER_SIZE];
 
     while (1) {
+
         fgets(buffer, sizeof(buffer), stdin);
 
         // Retirer le saut de ligne de `fgets`
