@@ -5,12 +5,16 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <ctype.h>
+#include <pthread.h>
 
 #include "../chat/parametres.h"
 #include "clienthandler.h"
 
 #define PORT 1234
 #define BUFFER_SIZE 1024
+
+pthread_mutex_t client_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 // Fonction temporaire qui a pour but de prendre le buffer reçu en extraire le pseudo du destinataire en début de message et de le renvoyer sans le pseudo dans le buffer au destinataire
 char* getDestinataire(char* buffer) {
@@ -96,7 +100,8 @@ void newConnection(int server_sock, struct sockaddr_in *client_addr) {
     int n = recv(new_sock, &data, sizeof(DataClient), 0); // Dès que client se connecte il envoye ses données au serveur 
 
     // Ajouter le client à la liste des clients connectés avec ses données
-    addClient(new_sock, &data);
+	addClient(new_sock, &data);
+
     printf("[+] %s connected to chat.\n", data.pseudo);
 }
 
@@ -141,6 +146,7 @@ int main() {
         max_sd = server_sock;
 
         // Ajouter les sockets des clients à readfds
+        pthread_mutex_lock(&client_mutex);
         for (int i = 0; i < MAX_CLIENTS; i++) {
             int sd = clients[i].sockfd;
             if (sd > 0) {
@@ -150,6 +156,7 @@ int main() {
                 max_sd = sd;
             }
         }
+        pthread_mutex_unlock(&client_mutex);
 
         // Utiliser select pour attendre l'activité sur l'un des sockets
         activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
