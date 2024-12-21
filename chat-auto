@@ -48,21 +48,30 @@ prompt_for_recipient() {
 # Initial recipient prompt
 prompt_for_recipient
 
-# Loop to read and send individual messages
+# Loop to read and send individual messages continuously
 while true; do
-    echo "Enter your message (Ctrl+D to change recipient):"
+    echo "Enter your message (Ctrl+D to change recipient or exit):"
+    
+    # Read user input
     if ! IFS= read -r MESSAGE; then
-        prompt_for_recipient
-        continue
+        echo "No message entered. Exiting."
+        break
     fi
+
+    # If the user enters an empty message, skip
     if [[ -z "$MESSAGE" ]]; then
         continue
     fi
 
+    # Prepend the recipient username to the message
     MESSAGE="$RECIPIENT $MESSAGE"
+    # Write the message to the pipe
     echo -e "$MESSAGE" > "$PIPE_NAME"
+    sleep 0.5
+    
 done
 
 # Cleanup on exit
 kill "$CLIENT_PID"
 rm "$PIPE_NAME"
+

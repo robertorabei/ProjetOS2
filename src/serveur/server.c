@@ -54,35 +54,56 @@ void handle_client_message(int client_sock, fd_set *readfds) {
 
     if (n <= 0) {
         if (n == 0) {
-            printf("%s disconnected.\n", getName(client_sock));
+            printf("%s s'est déconnecté.\n", getName(client_sock));
         } else {
-            perror("Recv error");
+            perror("Erreur de réception");
         }
         close(client_sock);
         FD_CLR(client_sock, readfds);
         removeClient(client_sock);
     } else {
-        buffer[n] = '\0';  // Assurez-vous que le buffer est bien terminé
-        char* destinataire = getDestinataire(buffer);  // Extrait le destinataire et nettoie le buffer
+        buffer[n] = '\0';  // S'assurer que le buffer est bien terminé
+
+        // Extraire le destinataire et nettoyer le buffer
+        char* destinataire = getDestinataire(buffer);
         if (destinataire) {
-            int dest_sock = getSocketfd(destinataire);  // Récupère le socket du destinataire
+            int dest_sock = getSocketfd(destinataire);  // Récupérer le socket du destinataire
             if (dest_sock > 0) {
                 // Récupérer le pseudo de l'expéditeur
-                const char* pseudo_expediteur = getName(client_sock);  // Fonction qui récupère le pseudo du client par son socket
-                if (pseudo_expediteur) {
-                    // Préparer le message avec le format attendu
-                    char message[BUFFER_SIZE];
-                    
+                const char* pseudo_expediteur = getName(client_sock);
+
+                // Trouver le client et vérifier s'il s'agit d'un bot
+                bool isBot = false;
+                pthread_mutex_lock(&client_mutex);
+                for (int i = 0; i < clientCount; i++) {
+                    if (clients[i].sockfd == client_sock) {
+                        isBot = clients[i].isBot;
+                        break;
+                    }
+                }
+                pthread_mutex_unlock(&client_mutex);
+
+                // Préparer le message avec le format approprié
+                char message[BUFFER_SIZE];
+                if (isBot) {
+                    // Si c'est un bot, ne pas souligner le pseudo
+                    snprintf(message, sizeof(message), "[%s] %s", pseudo_expediteur, buffer);
+                } else {
+                    // Si c'est un utilisateur normal, souligner le pseudo
                     snprintf(message, sizeof(message), "[\x1B[4m%s\x1B[0m] %s", pseudo_expediteur, buffer);
-                    
-                    // Envoyer le message formaté au destinataire
-                    send(dest_sock, message, strlen(message), 0);
+                }
+
+                // Envoyer le message au destinataire
+                send(dest_sock, message, strlen(message), 0);
+
+                // Si ce n'est pas un bot, envoyer aussi le message à l'expéditeur
+                if (!isBot) {
                     send(client_sock, message, strlen(message), 0);
                 }
             } else {
                 printf("Destinataire (%s) non connecté.\n", destinataire);
             }
-            free(destinataire);  // Libère la mémoire allouée pour le pseudo
+            free(destinataire);  // Libérer la mémoire allouée pour le pseudo du destinataire
         }
     }
 }

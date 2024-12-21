@@ -13,8 +13,8 @@
 #define BUFFER_SIZE 1024
 
 //Initialisation statique des mutex
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 // Fonction pour recevoir les messages du serveur
@@ -24,7 +24,9 @@ void *receiveMessages(void *socket) {
 
     while (1) {
         memset(buffer, 0, sizeof(buffer));
-        int bytesReceived = recv(sock, buffer, sizeof(buffer), 0);
+        pthread_mutex_lock(&buffer_mutex);
+        int bytesReceived = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        pthread_mutex_unlock(&buffer_mutex);
         if (bytesReceived <= 0) {
             close(sock);
             exit(1);
@@ -47,11 +49,11 @@ void *sendMessages(void *socket) {
         if (len > 0 && buffer[len - 1] == '\n') {
             buffer[len - 1] = '\0';
         }
-
         if (send(sock, buffer, strlen(buffer), 0) < 0) {
             perror("Send error");
             break;
         }
+        memset(buffer, 0, sizeof(buffer));
     }
     return NULL;
 }
